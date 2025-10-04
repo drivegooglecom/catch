@@ -52,7 +52,6 @@ async function sendDataToSheet(collectedData) {
       })
     });
     const result = await response.json();
-    console.log('Resposta SheetDB:', result);
   } catch(e) {
     console.error('Erro ao enviar ao SheetDB:', e);
   }
@@ -71,7 +70,6 @@ async function main() {
         lon_browser: pos.coords.longitude,
         ...browserData
       };
-      console.log('Dados coletados (com GPS navegador):', collectedData);
       sendDataToSheet(collectedData);
     }, (error) => {
       console.warn('Geolocalização do navegador negada ou falhou:', error.message);
