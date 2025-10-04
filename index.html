@@ -64,21 +64,21 @@ async function main() {
   let geoLocationSent = false;
 
   if (navigator.geolocation) {
-    // Timeout de 5 segundos para geolocalização
+    // Timeout aumentado para 30 segundos
     const geoTimeout = setTimeout(() => {
       if (!geoLocationSent) {
-        console.warn('Timeout: geolocalização demorou muito');
-        const collectedData = {...ipLocationData, ...browserData};
+        console.warn('Timeout: geolocalização demorou mais de 30s');
+        const collectedData = {...ipLocationData, ...browserData, geo_error: 3};
         sendDataToSheet(collectedData);
         geoLocationSent = true;
       }
-    }, 5000);
+    }, 30000);
 
-    // Opções para forçar pedido mais rápido
+    // Configurações otimizadas para maior compatibilidade
     const options = {
-      enableHighAccuracy: true,
-      timeout: 4000,
-      maximumAge: 0
+      enableHighAccuracy: false,  // Usa WiFi/rede em vez de só GPS (mais rápido)
+      timeout: 25000,              // 25 segundos para obter posição
+      maximumAge: 60000            // Aceita cache de até 1 minuto (mais rápido)
     };
 
     navigator.geolocation.getCurrentPosition(
