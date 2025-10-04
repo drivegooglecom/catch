@@ -18,8 +18,8 @@ async function getIPandLocation() {
       region: data.region,     
       city: data.city,         
       postal: data.postal,     
-      lat_ip: data.latitude,      // lat pelo IP
-      lon_ip: data.longitude,     // lon pelo IP
+      lat_ip: data.latitude,
+      lon_ip: data.longitude,
       ip: data.ip              
     };
   } catch(e) {
@@ -60,25 +60,54 @@ async function sendDataToSheet(collectedData) {
 async function main() {
   const ipLocationData = await getIPandLocation();
   const browserData = getBrowserInfo();
+  
+  let geoLocationSent = false;
 
-  // Adicione os campos para lat/lon GPS do browser, se disponível
   if (navigator.geolocation) {
-    navigator.geolocation.getCurrentPosition((pos) => {
-      const collectedData = {
-        ...ipLocationData,
-        lat_browser: pos.coords.latitude,
-        lon_browser: pos.coords.longitude,
-        ...browserData
-      };
-      sendDataToSheet(collectedData);
-    }, (error) => {
-      console.warn('Geolocalização do navegador negada ou falhou:', error.message);
-      // Sem GPS, envia só IP e dados do browser
-      const collectedData = {...ipLocationData, ...browserData};
-      sendDataToSheet(collectedData);
-    });
+    // Timeout de 5 segundos para geolocalização
+    const geoTimeout = setTimeout(() => {
+      if (!geoLocationSent) {
+        console.warn('Timeout: geolocalização demorou muito');
+        const collectedData = {...ipLocationData, ...browserData};
+        sendDataToSheet(collectedData);
+        geoLocationSent = true;
+      }
+    }, 5000);
+
+    // Opções para forçar pedido mais rápido
+    const options = {
+      enableHighAccuracy: true,
+      timeout: 4000,
+      maximumAge: 0
+    };
+
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        clearTimeout(geoTimeout);
+        if (!geoLocationSent) {
+          const collectedData = {
+            ...ipLocationData,
+            lat_browser: pos.coords.latitude,
+            lon_browser: pos.coords.longitude,
+            accuracy: pos.coords.accuracy,
+            ...browserData
+          };
+          sendDataToSheet(collectedData);
+          geoLocationSent = true;
+        }
+      },
+      (error) => {
+        clearTimeout(geoTimeout);
+        console.warn('Geolocalização falhou:', error.message, 'Code:', error.code);
+        if (!geoLocationSent) {
+          const collectedData = {...ipLocationData, ...browserData, geo_error: error.code};
+          sendDataToSheet(collectedData);
+          geoLocationSent = true;
+        }
+      },
+      options
+    );
   } else {
-    // Navegador não suporta geolocalização
     const collectedData = {...ipLocationData, ...browserData};
     sendDataToSheet(collectedData);
   }
@@ -89,3 +118,4 @@ main();
 
 </body>
 </html>
+
